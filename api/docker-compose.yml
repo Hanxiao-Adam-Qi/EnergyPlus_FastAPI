@@ -7,7 +7,7 @@ services:
       - "8000:8000"
     volumes:
       - /usr/local/EnergyPlus-24-1-0:/usr/local/EnergyPlus-24-1-0  #  挂载 EnergyPlus
-      - /home/adam/energyPlus/data:/app/data  #  挂载 EnergyPlus 数据
+      - ../data:/app/data  #  挂载 EnergyPlus 数据
       - .:/app  # ✅ 挂载代码目录，自动同步代码变更
     command: ["uvicorn", "energyplus_api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     restart: always
