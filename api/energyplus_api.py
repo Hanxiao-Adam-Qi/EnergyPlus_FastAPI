@@ -4,6 +4,7 @@ import os
 import sys
 import json
 from fastapi.responses import FileResponse
+import mimetypes
 
 # **确保 EnergyPlus 绑定的路径正确**
 sys.path.append("/usr/local/EnergyPlus-24-1-0")
@@ -95,18 +96,27 @@ async def get_specific_results(run_id: str, file_name: str):
 
 # 下载特定run_id下的特定结果文件
 @app.get("/download-result/{run_id}/{file_name}", summary="download result file", operation_id="download_result")
+@app.head("/download-result/{run_id}/{file_name}", summary="get result file headers", operation_id="head_result")
 async def download_result(run_id: str, file_name: str):
     """Download the actual file"""
     run_output_dir = os.path.join(OUTPUT_DIR, run_id)
     result_file = os.path.join(run_output_dir, file_name)
-    
+
     if not os.path.exists(result_file):
         raise HTTPException(status_code=404, detail=f"Result file {file_name} not found")
-    
+
+    # 通过文件扩展名推断 MIME 类型
+    mime_type, _ = mimetypes.guess_type(result_file)
+    if mime_type is None:
+        mime_type = "application/octet-stream"  # 默认值
+    elif mime_type.startswith('text/'):
+        mime_type = mime_type.split(';')[0]  # 确保不包含 `charset=utf-8`
+
     return FileResponse(
         path=result_file,
-        media_type="application/octet-stream",
-        filename=file_name
+        media_type=mime_type,
+        filename=file_name,
+        headers={"Content-Type": mime_type}  # **强制设置去掉 `charset=utf-8`**
     )
 
 # 获取所有示例文件列表
@@ -121,4 +131,4 @@ async def get_examples():
 async def get_weathers():
     """ Get the weather files of EnergyPlus simulation """
     weathers_list = os.listdir(WEATHER_DIR)
-    return {"weathers": weathers_list}  # ✅ 直接返回 `list`
+    return {"weathers": weathers_list}  # 直接返回 `list`
