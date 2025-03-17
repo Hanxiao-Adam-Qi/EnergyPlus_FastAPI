@@ -9,5 +9,6 @@ services:
       - /usr/local/EnergyPlus-24-1-0:/usr/local/EnergyPlus-24-1-0  #  挂载 EnergyPlus
       - ../data:/app/data  #  挂载 EnergyPlus 数据
       - .:/app  # ✅ 挂载代码目录，自动同步代码变更
+      - /app/node_modules  # ✅ 在容器内部创建 `node_modules`，防止被本地覆盖
     command: ["uvicorn", "energyplus_api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     restart: always

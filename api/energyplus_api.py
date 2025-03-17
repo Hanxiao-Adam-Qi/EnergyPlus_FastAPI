@@ -1,11 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import os
 import sys
 import json
 from fastapi.responses import FileResponse
 import mimetypes
+import subprocess
 
+###############################EnergyPlus###########################################
 # **确保 EnergyPlus 绑定的路径正确**
 sys.path.append("/usr/local/EnergyPlus-24-1-0")
 import uuid
@@ -132,3 +134,31 @@ async def get_weathers():
     """ Get the weather files of EnergyPlus simulation """
     weathers_list = os.listdir(WEATHER_DIR)
     return {"weathers": weathers_list}  # 直接返回 `list`
+
+######################################HTML to Markdown#########################################
+@app.post("/convert-html-to-markdown", summary="Convert HTML to Markdown")
+async def convert_html_to_markdown(request: Request):
+    """
+    Convert HTML to Markdown using Turndown.js
+    """
+    data = await request.json()
+    
+    try:
+        # 通过管道传递数据给 Node.js 脚本
+        process = subprocess.Popen(
+            ["node", "/app/convert.js"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        # 发送 JSON 数据到脚本的标准输入
+        stdout, stderr = process.communicate(json.dumps(data))
+        
+        if process.returncode != 0:
+            raise HTTPException(status_code=500, detail=f"Conversion failed: {stderr}")
+            
+        return {"markdown": stdout.strip()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
