@@ -23,4 +23,4 @@ COPY . /app
 ENV PYTHONPATH="/usr/local/EnergyPlus-24-1-0:$PYTHONPATH"
 
 # 开启 FastAPI 开发模式（自动重载）
-CMD ["uvicorn", "energyplus_api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "fastAPI_dify:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
