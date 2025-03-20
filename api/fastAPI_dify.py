@@ -128,12 +128,80 @@ async def get_examples():
     examples_list = os.listdir(EXAMPLES_DIR)
     return {"examples": examples_list}
 
+# 获取指定示例文件的下载链接
+@app.get("/get-specific-example-file/{file_name}", summary="get specific example file", operation_id="get_specific_example")
+async def get_specific_example(file_name: str):
+    example_file = os.path.join(EXAMPLES_DIR, file_name)
+    if not os.path.exists(example_file):
+        raise HTTPException(status_code=404, detail=f"Example file {file_name} not found")
+    
+    # 返回文件信息和下载链接，而不是文件内容
+    download_url = f"http://192.168.0.66:8000/download-example-file/{file_name}"
+    
+    return {
+        "filename": file_name,
+        "download_url": download_url,
+        "file_size": os.path.getsize(example_file)
+    }
+
+# 添加一个新端点用于实际下载文件
+@app.get("/download-example-file/{file_name}", summary="download example file")
+async def download_example_file(file_name: str):
+    example_file = os.path.join(EXAMPLES_DIR, file_name)
+    if not os.path.exists(example_file):
+        raise HTTPException(status_code=404, detail=f"Example file {file_name} not found")
+    
+    mime_type = "text/plain"
+    mime_type = mime_type.split(';')[0]
+    
+    return FileResponse(
+        path=example_file,
+        media_type=mime_type,
+        filename=file_name,
+        headers={"Content-Type": mime_type, "Content-Disposition": f"attachment; filename={file_name}"}
+    )
+
+
 # 获取所有天气文件列表
 @app.get("/get-weathers", summary="get weathers of EnergyPlus simulation", operation_id="get_weathers")
 async def get_weathers():
     """ Get the weather files of EnergyPlus simulation """
     weathers_list = os.listdir(WEATHER_DIR)
     return {"weathers": weathers_list}  # 直接返回 `list`
+
+# 获取指定天气文件的下载链接
+@app.get("/get-specific-weather-file/{file_name}", summary="get specific weather file", operation_id="get_specific_weather")
+async def get_specific_weather(file_name: str):
+    """ Get information about a specific weather file """
+    weather_file = os.path.join(WEATHER_DIR, file_name)
+    if not os.path.exists(weather_file):
+        raise HTTPException(status_code=404, detail=f"Weather file {file_name} not found")
+    
+    # 返回文件信息和下载链接，而不是文件内容
+    download_url = f"http://192.168.0.66:8000/download-weather-file/{file_name}"
+    
+    return {
+        "filename": file_name,
+        "download_url": download_url,
+        "file_size": os.path.getsize(weather_file)
+    }
+
+# 添加一个新端点用于实际下载天气文件
+@app.get("/download-weather-file/{file_name}", summary="download weather file")
+async def download_weather_file(file_name: str):
+    weather_file = os.path.join(WEATHER_DIR, file_name)
+    if not os.path.exists(weather_file):
+        raise HTTPException(status_code=404, detail=f"Weather file {file_name} not found")
+    
+    mime_type = "text/plain"
+    mime_type = mime_type.split(';')[0]
+    
+    return FileResponse(
+        path=weather_file,
+        media_type=mime_type,
+        filename=file_name,
+        headers={"Content-Type": mime_type, "Content-Disposition": f"attachment; filename={file_name}"}
+    )
 
 ######################################HTML to Markdown#########################################
 @app.post("/convert-html-to-markdown", summary="Convert HTML to Markdown")
